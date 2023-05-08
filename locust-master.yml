@@ -1,0 +1,42 @@
+---
+- name: Activate Locust Master
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+    - name: Add Docker GPG apt Key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      ansible.builtin.apt:
+        name: docker-ce
+        state: present
+        update_cache: true
+
+    - name: Install Docker SDK for Python
+      ansible.builtin.pip:
+        name: docker
+
+    - name: Checkout locust tasks
+      ansible.builtin.git:
+        repo: "{{ locust_tasks_git_url }}/locust-tasks.git"
+        dest: /opt/locust-tasks
+        version: main
+
+    - name: Start Locust master container
+      community.docker.docker_container:
+        name: locust-master
+        image: locustio/locust
+        command: -f /opt/locust-tasks/tasks.py --master --host=http://localhost --web-host=0.0.0.0 --web-port=8089
+        ports:
+          - "8089:8089"
+          - "5557:5557"
+        volumes:
+          - "/opt/locust-tasks:/opt/locust-tasks"
