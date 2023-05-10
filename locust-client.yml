@@ -34,7 +34,7 @@
       community.docker.docker_container:
         name: "locust-client{{ item }}"
         image: locustio/locust
-        command: -f /opt/locust-tasks/tasks.py --worker --master-host={{ master_ip }}
+        command: -f /opt/locust-tasks/{{ task_file }} --worker --master-host={{ master_ip }}
         volumes:
           - "/opt/locust-tasks:/opt/locust-tasks"
       with_sequence: count={{ ansible_facts['processor_vcpus'] }}
